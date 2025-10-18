@@ -54,6 +54,37 @@ export const generationReducer = (state: AppState, action: Action): AppState => 
           : [...state.selectedExpressions, expressionName],
       };
 
+    case 'SET_SOURCE_IMAGE':
+      return {
+        ...state,
+        sourceImage: action.payload.dataUrl,
+        isCalibrated: false,
+        error: null,
+      };
+
+    case 'REMOVE_SOURCE_IMAGE':
+      return {
+        ...state,
+        sourceImage: null,
+        isCalibrated: false,
+      };
+
+    case 'START_CALIBRATION':
+      return {
+        ...state,
+        isLoading: true,
+        loadingMessage: 'Calibrating image...',
+        error: null,
+      };
+
+    case 'CALIBRATION_SUCCESS':
+      return {
+        ...state,
+        isLoading: false,
+        loadingMessage: '',
+        isCalibrated: true,
+      };
+
     default:
       return state;
   }

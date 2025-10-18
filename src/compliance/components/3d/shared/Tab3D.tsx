@@ -16,7 +16,7 @@ export const Tab3D: React.FC<Tab3DProps> = ({ position, label, isActive, onClick
   const [isHovered, setIsHovered] = useState(false);
 
   // Animate tab on hover and active state
-  useFrame((state) => {
+  useFrame(() => {
     if (meshRef.current) {
       const targetY = isHovered ? position[1] + 0.1 : position[1];
       meshRef.current.position.y += (targetY - meshRef.current.position.y) * 0.1;

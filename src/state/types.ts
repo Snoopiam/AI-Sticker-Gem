@@ -22,6 +22,7 @@ export interface GeneratedResult {
   dataUrl: string; // base64 encoded image or video
   settings: Settings;
   timestamp: number;
+  format?: 'static' | 'animated';
 }
 
 // All settings required to generate a sticker
@@ -52,7 +53,8 @@ export interface AppState {
   error: string | null;
   credits: number;
   results: GeneratedResult[];
-  // Identity & Calibration state will be added here later
+  sourceImage: string | null;
+  isCalibrated: boolean;
 }
 
 // Defines the shape of actions for the reducer
@@ -62,5 +64,9 @@ export type Action =
   | { type: 'START_GENERATION'; payload: { message: string } }
   | { type: 'GENERATION_SUCCESS'; payload: { results: GeneratedResult[] } }
   | { type: 'GENERATION_ERROR'; payload: { error: string } }
-  | { type: 'CHANGE_CREDITS'; payload: { amount: number } };
+  | { type: 'CHANGE_CREDITS'; payload: { amount: number } }
+  | { type: 'SET_SOURCE_IMAGE'; payload: { dataUrl: string } }
+  | { type: 'REMOVE_SOURCE_IMAGE' }
+  | { type: 'START_CALIBRATION' }
+  | { type: 'CALIBRATION_SUCCESS' };
 

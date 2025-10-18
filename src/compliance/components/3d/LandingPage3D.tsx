@@ -1,30 +1,31 @@
 import { useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Environment, Text } from '@react-three/drei';
-import { motion } from 'framer-motion-3d';
-import { useTransform } from 'framer-motion';
 import { AiCore3D } from './AiCore3D';
 import { ParticleSystem } from './shared/ParticleSystem';
 import { useScroll3D } from '../../../hooks/useScroll3D';
-import { Group } from 'three';
 
-// A new sub-component for the animated scroll prompt
+// A simpler scroll indicator without motion-3d to avoid WebGL context issues
 const AnimatedScrollIndicator = () => {
-  const groupRef = useRef<Group>(null);
-  const { scrollYProgress } = useScroll3D();
-
-  // Opacity will be 1 at the top and fade to 0 as the user scrolls down
-  const opacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
+  const groupRef = useRef<any>(null);
 
   useFrame((state) => {
-    // Adds a subtle bobbing animation to draw attention
     if (groupRef.current) {
+      // Bobbing animation
       groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.1 - 2.8;
+      
+      // Fade out after 3 seconds
+      const elapsed = state.clock.elapsedTime;
+      const opacity = Math.max(0, 1 - elapsed / 3);
+      
+      if (groupRef.current.children[0]?.material) {
+        groupRef.current.children[0].material.opacity = opacity;
+      }
     }
   });
 
   return (
-    <motion.group ref={groupRef} opacity={opacity}>
+    <group ref={groupRef}>
       <Text
         fontSize={0.25}
         color="white"
@@ -32,48 +33,49 @@ const AnimatedScrollIndicator = () => {
         anchorY="middle"
         outlineWidth={0.01}
         outlineColor="#000000"
+        fillOpacity={1}
       >
-        Scroll to Begin
+        Scroll to Begin ↓
       </Text>
-      <Text
-        position={[0, -0.4, 0]}
-        fontSize={0.5}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-      >
-        ↓
-      </Text>
-    </motion.group>
+    </group>
   );
 };
 
-
-export const LandingPage3D: React.FC = () => {
+export const LandingPage3D = () => {
   const { rotationY, rotationX, scale } = useScroll3D();
-  
+
   return (
-    <div className="h-full w-full bg-gray-900">
-      <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
+    <div className="relative w-full h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900">
+      <Canvas
+        camera={{ position: [0, 0, 8], fov: 50 }}
+        gl={{ antialias: true, alpha: true }}
+      >
         <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} color="#a78bfa" intensity={1.5} />
-        <pointLight position={[-10, -10, -10]} color="#6d28d9" intensity={1} />
-        
-        <motion.group 
-          rotation-y={rotationY} 
-          rotation-x={rotationX}
-          scale={scale}
+        <pointLight position={[10, 10, 10]} intensity={1} />
+        <pointLight position={[-10, -10, -10]} intensity={0.5} color="#a78bfa" />
+
+        <group
+          rotation-y={rotationY.get()}
+          rotation-x={rotationX.get()}
+          scale={scale.get()}
         >
           <AiCore3D isProcessing={false} />
-        </motion.group>
-        
-        <ParticleSystem count={200} />
-        
-        {/* The new animated scroll indicator is added here */}
+          <ParticleSystem count={150} />
+        </group>
+
         <AnimatedScrollIndicator />
-        
+
         <Environment preset="night" />
       </Canvas>
+
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+        <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-2xl">
+          AI Sticker Studio
+        </h1>
+        <p className="text-xl text-purple-200 drop-shadow-lg">
+          Create Unique Stickers with AI
+        </p>
+      </div>
     </div>
   );
 };

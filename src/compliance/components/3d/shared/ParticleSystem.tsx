@@ -21,9 +21,9 @@ export const ParticleSystem = ({ count = 200 }) => {
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
-  useFrame((state) => {
+  useFrame(() => {
     particles.forEach((particle, i) => {
-      let { factor, speed } = particle;
+      const { speed } = particle;
       const t = (particle.time += speed);
       const a = Math.cos(t) + Math.sin(t * 1) / 10;
       const b = Math.sin(t) + Math.cos(t * 2) / 10;

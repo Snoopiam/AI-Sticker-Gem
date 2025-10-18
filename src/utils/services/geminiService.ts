@@ -84,3 +84,84 @@ export const generateSticker = async (settings: Settings, expressionName: string
   }
 };
 
+/**
+ * Calls the Gemini API to generate an animated sticker.
+ */
+export const generateAnimatedSticker = async (settings: Settings, expressionName: string): Promise<string> => {
+  const expressionDescription = EXPRESSIONS_MAP.get(expressionName) || `A standard ${expressionName} expression.`;
+  
+  const animationPrompt = settings.animationStyle === 'Custom' 
+    ? settings.customAnimationPrompt 
+    : settings.animationStyle;
+
+  const userPrompt = `
+    You are a world-class digital animator specializing in clean, vibrant animated stickers.
+    Your primary duty is to create an animated sticker based on the provided details.
+
+    **Identity Anchor (from text description):**
+    - Subject: "${settings.textSubject}"
+    - Key Characteristics: "${settings.textCharacteristics}"
+
+    **Animation Task:**
+    1. **Expression/Pose:** Create an animated sticker of the character with the following expression:
+       "${expressionDescription}"
+
+    2. **Animation Style:** ${animationPrompt}
+
+    3. **Artistic Style:**
+       - Overall Style: ${settings.artisticStyle}
+       - Color Palette: ${settings.colorPalette}
+       - Line Style: ${settings.lineStyle}
+       - Shading Style: ${settings.shadingStyle}
+
+    4. **Composition:** ${settings.composition}
+
+    5. **Output Format:** The final animation MUST have a transparent background (alpha channel).
+       It should be a professional, high-quality animated sticker (GIF or WebP).
+       The animation should be smooth, looping, and last 2-3 seconds.
+
+    6. **Negative Prompts:** Avoid the following: blurry, low-quality, text, watermarks, distorted, ugly, tiling, poorly drawn, out of frame, disfigured.
+  `.trim();
+
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+  
+  if (!apiKey) {
+    throw new Error("API key is not configured. Please set VITE_GEMINI_API_KEY in your .env file.");
+  }
+  
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+
+  const payload = {
+    contents: [{
+      parts: [{ text: userPrompt }]
+    }],
+    generationConfig: {
+      responseMimeType: "image/png", // Note: Gemini might not support animated GIFs directly
+    },
+  };
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    const result = await response.json();
+    const base64Data = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+    if (!base64Data) {
+      throw new Error("No image data found in API response.");
+    }
+
+    return `data:image/png;base64,${base64Data}`;
+  } catch (error) {
+    console.error("Gemini API call failed:", error);
+    throw new Error("Failed to generate animated sticker. Please try again.");
+  }
+};
+

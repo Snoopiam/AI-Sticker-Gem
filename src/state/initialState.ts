@@ -25,5 +25,7 @@ export const initialState: AppState = {
   error: null,
   credits: 100, // Starting credits for a new user
   results: [],
+  sourceImage: null,
+  isCalibrated: false,
 };
 
